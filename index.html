@@ -257,6 +257,21 @@
             box-shadow: 0 0 8px var(--hologram-green);
         }
         
+        .radio-controls {
+            position: absolute;
+            top: 20px;
+            right: 50%;
+            transform: translateX(50%);
+            display: flex;
+            gap: 1rem;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 0.8rem 1.5rem;
+            border-radius: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--hologram-green);
+        }
+        
         .video-controls {
             position: absolute;
             bottom: 60px;
@@ -443,11 +458,17 @@
                 <source src="https://assets.codepen.io/3364143/sample.mp4" type="video/mp4">
                 Tu navegador no soporta la etiqueta de video.
             </video>
+            
+            <!-- Radio Player (hidden by default) -->
+            <audio class="radio-player" id="radioPlayer" style="display: none;">
+                <source src="https://link.radioking.com/margacode-music" type="audio/mpeg">
+            </audio>
+            
             <div class="particles-overlay" id="particles"></div>
             
             <div class="song-info">
-                <div class="song-title">Quantum Resonance</div>
-                <div class="song-artist">Neural Beats Collective</div>
+                <div class="song-title" id="songTitle">Quantum Resonance</div>
+                <div class="song-artist" id="songArtist">Neural Beats Collective</div>
             </div>
             
             <div class="frequency-display">
@@ -455,6 +476,24 @@
             </div>
             
             <div class="music-visualizer" id="visualizer"></div>
+            
+            <div class="radio-controls">
+                <button class="control-btn" id="radioBtn" title="MargaCode Radio">
+                    <i class="fas fa-radio"></i>
+                </button>
+                <button class="control-btn" id="videoBtn" title="Video Mode">
+                    <i class="fas fa-video"></i>
+                </button>
+            </div>
+            
+            <div class="radio-controls">
+                <button class="control-btn" id="radioBtn" title="MargaCode Radio">
+                    <i class="fas fa-radio"></i>
+                </button>
+                <button class="control-btn" id="videoBtn" title="Video Mode">
+                    <i class="fas fa-video"></i>
+                </button>
+            </div>
             
             <div class="video-controls">
                 <button class="control-btn" id="prevBtn">
