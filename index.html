@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MargaCode Browser - Reproductor de Video Musical</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --quantum-blue: #0ff0fc;
+            --hologram-green: #00ff9d;
+            --debug-purple: #bd00ff;
+            --dark-space: #0a0e17;
+            --panel-bg: rgba(15, 20, 35, 0.95);
+            --music-red: #ff0055;
+            --music-orange: #ff7700;
+            --music-yellow: #ffdd00;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--dark-space) 0%, #1a1f2d 100%);
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        header {
+            background: rgba(10, 15, 30, 0.9);
+            padding: 1rem;
+            border-bottom: 1px solid var(--quantum-blue);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--quantum-blue);
+            text-shadow: 0 0 10px var(--quantum-blue);
+        }
+        
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: radial-gradient(circle, var(--debug-purple), transparent);
+            border-radius: 50%;
+            position: relative;
+        }
+        
+        .logo-icon::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 50%;
+            border: 2px solid var(--quantum-blue);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        
+        .container {
+            display: flex;
+            height: 100%;
+        }
+        
+        .debug-panel {
+            width: 300px;
+            background: var(--panel-bg);
+            border-right: 1px solid var(--hologram-green);
+            padding: 1.5rem;
+            overflow-y: auto;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        
+        .section-title {
+            color: var(--hologram-green);
+            margin-bottom: 1.5rem;
+            font-size: 1.6rem;
+            position: relative;
+            padding-bottom: 0.5rem;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 2px;
+            background: var(--hologram-green);
+        }
+        
+        .metric-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .metric-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--quantum-blue);
+            font-family: monospace;
+            min-width: 100px;
+            text-shadow: 0 0 10px var(--quantum-blue);
+        }
+        
+        .metric-label {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            flex-grow: 1;
+        }
+        
+        .memory-container {
+            background: rgba(20, 30, 50, 0.4);
+            border-radius: 8px;
+            padding: 1.5rem;
+            border: 1px solid rgba(0, 255, 157, 0.2);
+        }
+        
+        .memory-header {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+        }
+        
+        .memory-icon {
+            width: 24px;
+            height: 24px;
+            background: var(--debug-purple);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--debug-purple);
+        }
+        
+        .memory-title {
+            font-size: 1.2rem;
+            color: var(--hologram-green);
+            text-shadow: 0 0 5px var(--hologram-green);
+        }
+        
+        .memory-usage {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--debug-purple);
+            font-family: monospace;
+            text-align: center;
+            margin: 1rem 0;
+            text-shadow: 0 0 15px var(--debug-purple);
+        }
+        
+        .memory-description {
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+            font-size: 1rem;
+            text-align: center;
+            padding: 0 1rem;
+        }
+        
+        .music-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .video-player {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        
+        .particles-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+        
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.7;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+        }
+        
+        .status-bar {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            z-index: 5;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            background: rgba(0, 0, 0, 0.5);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--hologram-green);
+            box-shadow: 0 0 8px var(--hologram-green);
+        }
+        
+        .video-controls {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1rem;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 0.8rem 1.5rem;
+            border-radius: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--quantum-blue);
+        }
+        
+        .control-btn {
+            background: transparent;
+            border: none;
+            color: var(--quantum-blue);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+            text-shadow: 0 0 8px var(--quantum-blue);
+        }
+        
+        .control-btn:hover {
+            color: white;
+            background: rgba(11, 240, 252, 0.2);
+            transform: scale(1.1);
+        }
+        
+        .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0 1rem;
+        }
+        
+        .volume-slider {
+            width: 100px;
+            height: 5px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            outline: none;
+        }
+        
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: var(--quantum-blue);
+            cursor: pointer;
+            box-shadow: 0 0 8px var(--quantum-blue);
+        }
+        
+        .music-visualizer {
+            position: absolute;
+            bottom: 130px;
+            left: 0;
+            right: 0;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 4px;
+            z-index: 4;
+            padding: 0 20px;
+        }
+        
+        .visual-bar {
+            width: 8px;
+            background: var(--quantum-blue);
+            border-radius: 4px 4px 0 0;
+            box-shadow: 0 0 8px var(--quantum-blue);
+            transition: height 0.1s ease-out;
+        }
+        
+        .song-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 10px;
+            z-index: 10;
+            max-width: 60%;
+            backdrop-filter: blur(5px);
+            border: 1px solid var(--hologram-green);
+        }
+        
+        .song-title {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--hologram-green);
+            margin-bottom: 5px;
+            text-shadow: 0 0 5px var(--hologram-green);
+        }
+        
+        .song-artist {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .frequency-display {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 15px;
+            border-radius: 10px;
+            z-index: 10;
+            font-family: monospace;
+            backdrop-filter: blur(5px);
+            border: 1px solid var(--debug-purple);
+        }
+        
+        .frequency-value {
+            color: var(--debug-purple);
+            font-size: 1.2rem;
+            text-shadow: 0 0 5px var(--debug-purple);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <div class="logo-icon"></div>
+            <span>MargaCode Music Browser</span>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="debug-panel">
+            <div>
+                <h2 class="section-title">MicroSize</h2>
+                <div class="metric-container">
+                    <div class="metric-item">
+                        <div class="metric-value">0.40</div>
+                        <div class="metric-label">CursorSize</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">0.42</div>
+                        <div class="metric-label">Preloader</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="memory-container">
+                <div class="memory-header">
+                    <div class="memory-icon"></div>
+                    <div class="memory-title">Estado Actual</div>
+                </div>
+                <div class="memory-usage">4GB</div>
+                <p class="memory-description">
+                    Use of the available traditools for code
+                </p>
+            </div>
+            
+            <div>
+                <h2 class="section-title">Music Processor</h2>
+                <div class="metric-container">
+                    <div class="metric-item">
+                        <div class="metric-value">128</div>
+                        <div class="metric-label">BPM</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">0.86</div>
+                        <div class="metric-label">Vibration</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="music-container">
+            <video class="video-player" id="videoPlayer">
+                <source src="https://assets.codepen.io/3364143/sample.mp4" type="video/mp4">
+                Tu navegador no soporta la etiqueta de video.
+            </video>
+            <div class="particles-overlay" id="particles"></div>
+            
+            <div class="song-info">
+                <div class="song-title">Quantum Resonance</div>
+                <div class="song-artist">Neural Beats Collective</div>
+            </div>
+            
+            <div class="frequency-display">
+                Frecuencia: <span class="frequency-value" id="frequency">0Hz</span>
+            </div>
+            
+            <div class="music-visualizer" id="visualizer"></div>
+            
+            <div class="video-controls">
+                <button class="control-btn" id="prevBtn">
+                    <i class="fas fa-step-backward"></i>
+                </button>
+                <button class="control-btn" id="playBtn">
+                    <i class="fas fa-play"></i>
+                </button>
+                <button class="control-btn" id="nextBtn">
+                    <i class="fas fa-step-forward"></i>
+                </button>
+                <div class="volume-container">
+                    <i class="fas fa-volume-up control-btn"></i>
+                    <input type="range" min="0" max="1" step="0.01" value="0.7" class="volume-slider" id="volumeSlider">
+                </div>
+            </div>
+            
+            <div class="status-bar">
+                <div class="status-item">
+                    <div class="status-indicator"></div>
+                    <span>Quantum Link: Active</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-indicator"></div>
+                    <span>Audio Response: On</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-indicator"></div>
+                    <span>Particles: Vibrating</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Crear partículas
+        const particlesContainer = document.getElementById('particles');
+        const particles = [];
+        const particleCount = 200;
+        const colors = [
+            'var(--quantum-blue)', 
+            'var(--debug-purple)', 
+            'var(--hologram-green)',
+            'var(--music-red)',
+            'var(--music-orange)',
+            'var(--music-yellow)'
+        ];
+        
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.classList.add('particle');
+            
+            const size = Math.random() * 20 + 5;
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const x = Math.random() * 100;
+            const y = Math.random() * 100;
+            
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            particle.style.backgroundColor = color;
+            particle.style.boxShadow = `0 0 ${size}px ${color}`;
+            particle.style.left = `${x}%`;
+            particle.style.top = `${y}%`;
+            
+            particlesContainer.appendChild(particle);
+            particles.push({
+                element: particle,
+                size: size,
+                baseSize: size,
+                x: x,
+                y: y,
+                color: color,
+                speed: Math.random() * 2 + 1,
+                angle: Math.random() * Math.PI * 2
+            });
+        }
+        
+        // Configurar audio
+        const video = document.getElementById('videoPlayer');
+        let audioContext, analyser, dataArray, source;
+        
+        function initAudio() {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            source = audioContext.createMediaElementSource(video);
+            
+            source.connect(analyser);
+            analyser.connect(audioContext.destination);
+            
+            analyser.fftSize = 256;
+            const bufferLength = analyser.frequencyBinCount;
+            dataArray = new Uint8Array(bufferLength);
+            
+            // Crear visualizador
+            createVisualizer(bufferLength);
+        }
+        
+        // Crear visualizador de barras
+        function createVisualizer(bufferLength) {
+            const visualizer = document.getElementById('visualizer');
+            visualizer.innerHTML = '';
+            
+            for (let i = 0; i < bufferLength; i++) {
+                const bar = document.createElement('div');
+                bar.classList.add('visual-bar');
+                bar.style.height = '2px';
+                visualizer.appendChild(bar);
+            }
+        }
+        
+        // Animar partículas según el audio
+        function animateParticles() {
+            if (!analyser) return;
+            
+            analyser.getByteFrequencyData(dataArray);
+            const average = getAverageVolume(dataArray);
+            const max = Math.max(...dataArray);
+            
+            // Actualizar visualizador
+            const bars = document.querySelectorAll('.visual-bar');
+            bars.forEach((bar, i) => {
+                const value = dataArray[i];
+                bar.style.height = `${value / 255 * 80}px`;
+                
+                // Cambiar color según la frecuencia
+                if (i < 20) bar.style.background = 'var(--music-red)';
+                else if (i < 40) bar.style.background = 'var(--music-orange)';
+                else if (i < 60) bar.style.background = 'var(--music-yellow)';
+                else bar.style.background = 'var(--quantum-blue)';
+            });
+            
+            // Actualizar frecuencia
+            document.getElementById('frequency').textContent = `${Math.round(average * 10)}Hz`;
+            
+            particles.forEach(particle => {
+                // Escala basada en el volumen
+                const scale = 1 + (average / 256) * 2;
+                particle.element.style.transform = `translate(-50%, -50%) scale(${scale})`;
+                
+                // Cambiar opacidad basado en el volumen
+                particle.element.style.opacity = 0.3 + (average / 256) * 0.7;
+                
+                // Cambiar tamaño basado en la frecuencia máxima
+                const sizeFactor = 1 + (max / 256) * 0.5;
+                particle.element.style.width = `${particle.baseSize * sizeFactor}px`;
+                particle.element.style.height = `${particle.baseSize * sizeFactor}px`;
+                
+                // Movimiento
+                particle.x += Math.cos(particle.angle) * particle.speed * 0.05;
+                particle.y += Math.sin(particle.angle) * particle.speed * 0.05;
+                
+                // Rebotar en los bordes
+                if (particle.x < 0 || particle.x > 100) particle.angle = Math.PI - particle.angle;
+                if (particle.y < 0 || particle.y > 100) particle.angle = -particle.angle;
+                
+                particle.element.style.left = `${particle.x}%`;
+                particle.element.style.top = `${particle.y}%`;
+                
+                // Cambiar color aleatoriamente con la música
+                if (Math.random() > 0.98) {
+                    const newColor = colors[Math.floor(Math.random() * colors.length)];
+                    particle.element.style.backgroundColor = newColor;
+                    particle.element.style.boxShadow = `0 0 ${particle.baseSize * sizeFactor}px ${newColor}`;
+                }
+            });
+            
+            requestAnimationFrame(animateParticles);
+        }
+        
+        function getAverageVolume(array) {
+            let sum = 0;
+            for (let i = 0; i < array.length; i++) {
+                sum += array[i];
+            }
+            return sum / array.length;
+        }
+        
+        // Inicializar audio cuando el usuario interactúa
+        video.addEventListener('play', () => {
+            if (!audioContext) {
+                initAudio();
+            }
+            animateParticles();
+            document.getElementById('playBtn').innerHTML = '<i class="fas fa-pause"></i>';
+        });
+        
+        video.addEventListener('pause', () => {
+            document.getElementById('playBtn').innerHTML = '<i class="fas fa-play"></i>';
+        });
+        
+        // Controles de video
+        document.getElementById('playBtn').addEventListener('click', () => {
+            if (video.paused) {
+                video.play();
+            } else {
+                video.pause();
+            }
+        });
+        
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            video.currentTime = Math.max(0, video.currentTime - 10);
+        });
+        
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            video.currentTime = Math.min(video.duration, video.currentTime + 10);
+        });
+        
+        document.getElementById('volumeSlider').addEventListener('input', (e) => {
+            video.volume = e.target.value;
+        });
+        
+        // Efecto de parpadeo para los valores
+        setInterval(() => {
+            const values = document.querySelectorAll('.metric-value');
+            values.forEach(value => {
+                value.style.textShadow = `0 0 10px rgba(11, 240, 252, ${0.3 + Math.random() * 0.7})`;
+            });
+            
+            const memory = document.querySelector('.memory-usage');
+            memory.style.textShadow = `0 0 15px rgba(189, 0, 255, ${0.4 + Math.random() * 0.6})`;
+        }, 800);
+        
+        // Iniciar video automáticamente (requiere interacción del usuario en algunos navegadores)
+        setTimeout(() => {
+            video.play().catch(e => console.log("La reproducción automática requiere interacción del usuario"));
+        }, 2000);
+    </script>
+</body>
+</html>
